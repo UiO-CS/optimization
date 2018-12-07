@@ -8,7 +8,11 @@ class ProximalOperator(ABC):
         pass
 
 
-
+# _        _    ____ ____   ___
+#| |      / \  / ___/ ___| / _ \
+#| |     / _ \ \___ \___ \| | | |
+#| |___ / ___ \ ___) |__) | |_| |
+#|_____/_/   \_\____/____/ \___/
 class FISTAProximal(ProximalOperator):
     '''Assumes gradient is 2*op(op(z) - y, adjoint=True)'''
 
@@ -24,3 +28,38 @@ class FISTAProximal(ProximalOperator):
     def __call__(self, y):
         b = y - self.gradient(y)/self.L
         return self.base_call(b)
+
+
+
+# ____  ____  ____  _   _
+#| __ )|  _ \|  _ \| \ | |
+#|  _ \| |_) | | | |  \| |
+#| |_) |  __/| |_| | |\  |
+#|____/|_|   |____/|_| \_|
+class BPDNFStar(ProximalOperator):
+
+    def __init__(self, sigma, eta, y):
+        self.sigma = sigma
+        self.eta = eta
+        self.y = y
+
+
+    def __call__(self, ksi):
+        norm_expression = ksi - self.sigma*self.y
+        norm_val = np.linalg.norm(innorm)
+        compare_val = self.eta*self.sigma
+
+        if norm_val < compare_val:
+            return np.zeros_like(ksi)
+
+        return (1 - compare_val/norm_val) *norm_expression
+
+
+class BPDNG(ProximalOperator):
+
+    def __init__(self, tau):
+        self.tau = tau
+
+    def __call__(self, z):
+        return np.sign(z)*np.clip(np.abs(z) - self.tau, 0, None)
+
