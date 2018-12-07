@@ -58,3 +58,4 @@ class MRIOperator(LinearOperator):
         result = np.fft.fft2(x, norm='ortho')
         result[~self.samp_patt] = 0
         return result
+
