@@ -37,7 +37,7 @@ class FISTA(Algorithm):
 
     def body(self, x_old, y_old, t_old):
 
-        x = tf.Print(self.proximal(y_old), [], "Hello")
+        x = self.proximal(y_old)
         t = (1 + tf.sqrt(1  + 4 * t_old**2))/2.0
         y = x + tf.complex((t_old - 1.0)/t, 0.0) * (x - x_old)
 
