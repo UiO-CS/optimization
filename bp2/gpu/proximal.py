@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
-import numpy as np
+# import numpy as np
+import tensorflow as tf
 
 class ProximalOperator(ABC):
 
@@ -23,15 +24,13 @@ class FISTAProximal(ProximalOperator):
         self.lam = lam
 
     def base_call(self, z):
-        # TODO: Implement
-        pass
-        # return np.sign(z)*np.clip(np.abs(z) - self.lam/self.L, 0, None)
+        return tf.sign(z)*tf.complex(tf.nn.relu(tf.abs(z) - self.lam/self.L), 0.0)
 
     def __call__(self, y):
         # TODO: Implement
         pass
-        # b = y - self.gradient(y)/self.L
-        # return self.base_call(b)
+        b = y - self.gradient(y)/self.L
+        return self.base_call(b)
 
 
 

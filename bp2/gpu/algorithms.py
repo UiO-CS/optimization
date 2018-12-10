@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
 from .proximal import FISTAProximal
 
+import tensorflow as tf
+
 import numpy as np
 from math import sqrt
 
@@ -11,9 +13,7 @@ class LASSOGradient:
         self.measurements = measurements
 
     def __call__(self, y):
-        # TODO: Implement
-        pass
-        # return 2*self.op(self.op(y) - self.measurements, adjoint=True)
+        return tf.complex(2.0, 0.0)*self.op(self.op(y) - self.measurements, adjoint=True)
 
 
 class Algorithm(ABC):
@@ -30,34 +30,37 @@ class FISTA(Algorithm):
 
     def __init__(self, gradient, L, lam):
         super().__init__()
-        # self.L = L
-        # self.lam = lam
-        # self.proximal = FISTAProximal(gradient, L, lam)
-        # self.result = None
+        self.L = L
+        self.lam = lam
+        self.proximal = FISTAProximal(gradient, L, lam)
+        self.result = None
+
+    def body(self, x_old, y_old, t_old):
+
+        x = tf.Print(self.proximal(y_old), [], "Hello")
+        t = (1 + tf.sqrt(1  + 4 * t_old**2))/2.0
+        y = x + tf.complex((t_old - 1.0)/t, 0.0) * (x - x_old)
+
+        return x, y, t
+
 
     def run(self, n_iter=1000, initial_x=None):
-        # TODO: Implement
-        pass
-        # if initial_x is None and self.result is None:
-        #     raise ValueError('Need an initial value')
-        # elif self.result != None:
-        #     initial_x = self.result
+        if initial_x is None and self.result is None:
+            raise ValueError('Need an initial value')
+        elif self.result != None:
+            initial_x = self.result
 
-        # x_old = initial_x
-        # y = x_old
-        # t_old = 1
+        x_old = initial_x
+        y = x_old
+        t_old = 1
 
-        # for i in range(1,n_iter+1):
-        #     print(i)
-        #     x = self.proximal(y)
-        #     t = (1 + sqrt(1 + 5*t_old**2))/2.0
-        #     y = x + (t_old - 1)/t * (x - x_old)
+        x, y, t = tf.while_loop(lambda *args: True,
+                                self.body,
+                                (initial_x, initial_x, 1.0),
+                                maximum_iterations=n_iter)
 
-        #     x_old = x
-        #     t_old = t
-
-        # self.result = x_old
-        # return x_old
+        # TODO: Set result
+        return x
 
 class PrimalDual(Algorithm):
 
