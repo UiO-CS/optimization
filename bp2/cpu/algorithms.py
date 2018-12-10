@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from .proximal import FISTAProximal
 
+import numpy as np
 from math import sqrt
 
 class LASSOGradient:
@@ -18,6 +19,9 @@ class Algorithm(ABC):
     @abstractmethod
     def run(self):
         pass
+
+    def __call__(self, *args):
+        return self.run(*args)
 
 
 class FISTA(Algorithm):
@@ -51,6 +55,33 @@ class FISTA(Algorithm):
         self.result = x_old
         return x_old
 
+class PrimalDual(Algorithm):
 
-    def __call__(self, *args):
-        return self.run(*args)
+    def __init__(self, op, prox_f_star, prox_g, theta, tau, sigma, eta):
+        self.op = op
+        self.prox_f_star = prox_f_star
+        self.prox_g = prox_g
+        self.theta = theta
+        self.tau = tau
+        self.sigma = sigma
+        self.eta = eta
+
+    def run(self, n_iter, initial_x=None, initial_ksi=None):
+
+        x_old = initial_x
+        x_line = x_old
+        ksi = np.zeros_like(x_old)
+
+        for i in range(n_iter):
+            print(i)
+            ksi = self.prox_f_star(ksi + self.sigma*self.op(x_line))
+            x = self.prox_g(x_old - self.tau*self.op(ksi, adjoint=True))
+            x_line = x + self.theta*(x - x_old)
+
+            x_old = x
+
+
+        self.result = x
+        return x
+
+

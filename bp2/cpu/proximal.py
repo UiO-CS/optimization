@@ -46,7 +46,7 @@ class BPDNFStar(ProximalOperator):
 
     def __call__(self, ksi):
         norm_expression = ksi - self.sigma*self.y
-        norm_val = np.linalg.norm(innorm)
+        norm_val = np.linalg.norm(norm_expression)
         compare_val = self.eta*self.sigma
 
         if norm_val < compare_val:
