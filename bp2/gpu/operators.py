@@ -6,6 +6,7 @@ import tensorflow as tf
 from tfwavelets.nodes import dwt2d, idwt2d
 
 class LinearOperator(ABC):
+    """Abstract class for Linear opeators"""
 
     @abstractmethod
     def forward(self, x):
@@ -14,7 +15,7 @@ class LinearOperator(ABC):
 
     @abstractmethod
     def adjoint(self, x):
-        """Computes A*x"""
+        """Computes A* x"""
         pass
 
     def __call__(self, x, adjoint=False):
@@ -32,9 +33,24 @@ class LinearOperator(ABC):
 
 
 class MRIOperator(LinearOperator):
-    """A = PFW*"""
+    """A = PFW* where
+    P: Projection matrix for a sampling pattern
+    F: Discrete Fourier transform
+    W*: Inverse discrete wavelet transform"""
 
     def __init__(self, samp_patt, wavelet, levels, shift_samp_patt=True):
+        """
+        Arguments:
+            samp_patt: Tensor of dtype bool. As Tensorflow does not
+                       have a fftshift function, the sampling pattern
+                       must look accordingly.
+            wavelet: Instance of the Wavelet class
+            levels:  Number of wavelet levels
+            shift_samp_patt: Optional bool. Default True.
+                             WARNING: Not used. Should indicate if the
+                             sampling pattern is fftshifted or not, in
+                             which case 
+        """
         super().__init__()
 
         self.wavelet = wavelet
@@ -43,6 +59,10 @@ class MRIOperator(LinearOperator):
 
 
     def forward(self, x):
+        """
+        Arguments:
+           x: Tensor
+        """
         real_idwt = idwt2d(tf.real(x), self.wavelet, self.levels)
         imag_idwt = idwt2d(tf.imag(x), self.wavelet, self.levels)
         result = tf.complex(real_idwt, imag_idwt)
@@ -50,14 +70,16 @@ class MRIOperator(LinearOperator):
         # TODO: is this right?
         result = tf.transpose(result, [2,0,1])
 
-        # TODO Is this right?
+        # TODO Is this right? Scaling to make FFT unitary
         result = tf.complex(1.0/tf.sqrt(tf.size(result, out_type=tf.float32)), 0.0) * tf.fft2d(result)
         result = tf.transpose(result, [1,2,0])
 
+        # Subsampling
         result = tf.where(self.samp_patt, result, tf.zeros_like(result))
         return result
 
     def adjoint(self, x):
+        """Calculate WF*P"""
         result = tf.where(self.samp_patt, x, tf.zeros_like(x))
         result = tf.transpose(result, [2,0,1]) # [channels, height, width]
         result = tf.complex(tf.sqrt(tf.size(result, out_type=tf.float32)), 0.0) * tf.ifft2d(result)
@@ -68,6 +90,7 @@ class MRIOperator(LinearOperator):
         return result
 
     def sample(self, x):
+        """Calculate PFx"""
         result = tf.transpose(x, [2,0,1])
         # TODO Is this right?
         result = tf.complex(1.0/tf.sqrt(tf.size(result, out_type=tf.float32)), 0.0) * tf.fft2d(result)

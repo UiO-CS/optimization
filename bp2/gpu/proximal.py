@@ -15,7 +15,9 @@ class ProximalOperator(ABC):
 #| |___ / ___ \ ___) |__) | |_| |
 #|_____/_/   \_\____/____/ \___/
 class FISTAProximal(ProximalOperator):
-    '''Assumes gradient is 2*op(op(z) - y, adjoint=True)'''
+    '''Assumes gradient is 2*op(op(z) - y, adjoint=True)
+
+    Proximal operator for Fista on lasso'''
 
     def __init__(self, gradient, L, lam):
         super().__init__()
@@ -40,6 +42,13 @@ class FISTAProximal(ProximalOperator):
 #| |_) |  __/| |_| | |\  |
 #|____/|_|   |____/|_| \_|
 class BPDNFStar(ProximalOperator):
+    """prox_{F*}
+
+    Where F* is the convex conjugate for when F(ksi) is the function that is 1 when
+    ||ksi - y|| <= eta and 0 otherwise
+
+    Equation can be found on p 485 of A mathematical introduction to
+    compressive sensing"""
 
     def __init__(self, sigma, eta, y):
         self.sigma = sigma
@@ -48,25 +57,28 @@ class BPDNFStar(ProximalOperator):
 
 
     def __call__(self, ksi):
-        # TODO: Implement
-        pass
-        # norm_expression = ksi - self.sigma*self.y
-        # norm_val = np.linalg.norm(norm_expression)
-        # compare_val = self.eta*self.sigma
+        norm_expression = ksi - self.sigma*self.y
+        norm_val = tf.norm(norm_expression)
+        compare_val = self.eta*self.sigma
 
-        # if norm_val < compare_val:
-        #     return np.zeros_like(ksi)
+        result = tf.cond(
+            tf.cast(norm_val, tf.float32) < compare_val,
+            lambda: tf.zeros_like(ksi),
+            lambda: (1 - compare_val/norm_val) * norm_expression
+        )
 
-        # return (1 - compare_val/norm_val) *norm_expression
+        return result
+
 
 
 class BPDNG(ProximalOperator):
+    """prox_G when G(z) = ||z||_1
+
+    Equation (15.23) in A mathematical introduction to compressive sensing"""
 
     def __init__(self, tau):
         self.tau = tau
 
     def __call__(self, z):
-        # TODO: Implement
-        pass
-        # return np.sign(z)*np.clip(np.abs(z) - self.tau, 0, None)
+        return tf.sign(z)*tf.complex(tf.nn.relu(tf.abs(z) - self.tau), 0.0)
 
