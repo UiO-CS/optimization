@@ -9,6 +9,16 @@ class ProximalOperator(ABC):
         pass
 
 
+class PDProxOperator(ProximalOperator):
+    """Primal-Dual prox operator. Abstract Class for the Primal-Dual algorithm"""
+
+    @abstractmethod
+    def set_parameters(self, theta, tau, sigma, eta):
+        """Paramters are placeholders to"""
+        pass
+
+        
+
 # _        _    ____ ____   ___
 #| |      / \  / ___/ ___| / _ \
 #| |     / _ \ \___ \___ \| | | |
@@ -41,7 +51,7 @@ class FISTAProximal(ProximalOperator):
 #|  _ \| |_) | | | |  \| |
 #| |_) |  __/| |_| | |\  |
 #|____/|_|   |____/|_| \_|
-class BPDNFStar(ProximalOperator):
+class BPDNFStar(PDProxOperator):
     """prox_{F*}
 
     Where F* is the convex conjugate for when F(ksi) is the function that is 1 when
@@ -52,8 +62,8 @@ class BPDNFStar(ProximalOperator):
 
     def __init__(self, measurements):
         # TODO: Type might be wrong
-        self.sigma = tf.placeholder(tf.float32, shape=(), name='sigma')
-        self.eta = tf.placeholder(tf.float32, shape=(), name='eta')
+        self.sigma = None
+        self.eta = None
         self.y = measurements
 
 
@@ -70,16 +80,21 @@ class BPDNFStar(ProximalOperator):
 
         return result
 
+    def set_parameters(self, theta, tau, sigma, eta):
+        self.sigma = sigma
+        self.eta = eta
 
 
-class BPDNG(ProximalOperator):
+class BPDNG(PDProxOperator):
     """prox_G when G(z) = ||z||_1
 
     Equation (15.23) in A mathematical introduction to compressive sensing"""
 
-    def __init__(self, tau):
-        self.tau = tau
+    def __init__(self):
+        self.tau = None
 
     def __call__(self, z):
         return tf.sign(z)*tf.complex(tf.nn.relu(tf.abs(z) - self.tau), 0.0)
 
+    def set_parameters(self, theta, tau, sigma, eta):
+        self.tau = tau

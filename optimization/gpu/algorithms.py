@@ -118,7 +118,7 @@ class PrimalDual(Algorithm):
 
     Optimizing F(Ax) + G(x)"""
 
-    def __init__(self, op, prox_f_star, prox_g, theta, tau, sigma, eta):
+    def __init__(self, op, prox_f_star, prox_g):
         """
         Arguments
             op: LinearOperator (The matrix A)
@@ -130,20 +130,24 @@ class PrimalDual(Algorithm):
         self.op = op
         self.prox_f_star = prox_f_star
         self.prox_g = prox_g
-        self.theta = theta
-        self.tau = tau
-        self.sigma = sigma
-        self.eta = eta
+
+        self.theta = tf.placeholder(tf.float32, shape=(), name='theta')
+        self.tau = tf.placeholder(tf.float32, shape=(), name='tau')
+        self.sigma = tf.placeholder(tf.float32, shape=(), name='sigma')
+        self.eta = tf.placeholder(tf.float32, shape=(), name='eta')
+
+        self.prox_f_star.set_parameters(self.theta, self.tau, self.sigma, self.eta)
+        self.prox_g.set_parameters(self.theta, self.tau, self.sigma, self.eta)
 
     def body(self, x_old, x_line, ksi):
         """Similar as FISTA.body"""
-        ksi = self.prox_f_star(ksi + self.sigma*self.op(x_line))
-        x = self.prox_g(x_old - self.tau*self.op(ksi, adjoint=True))
-        x_line = x + self.theta*(x - x_old)
+        ksi = self.prox_f_star(ksi + tf.cast(self.sigma, tf.complex64)*self.op(x_line))
+        x = self.prox_g(x_old - tf.cast(self.tau, tf.complex64)*self.op(ksi, adjoint=True))
+        x_line = x + tf.cast(self.theta, tf.complex64)*(x - x_old)
 
         return x, x_line, ksi
 
-    def run(self, n_iter, initial_x=None, initial_ksi=None):
+    def run(self, initial_x=None, initial_ksi=None):
         """Similar as FISTA.body"""
 
         # Initial values
@@ -154,6 +158,6 @@ class PrimalDual(Algorithm):
         x, x_line, ksi = tf.while_loop(lambda *args: True,
                                        self.body,
                                        (x, x_line, ksi),
-                                       maximum_iterations=n_iter)
+                                       maximum_iterations=tf.placeholder(tf.int32, shape=(), name='n_iter'))
 
         return x
