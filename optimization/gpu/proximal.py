@@ -9,12 +9,20 @@ class ProximalOperator(ABC):
         pass
 
 
+
 class PDProxOperator(ProximalOperator):
     """Primal-Dual prox operator. Abstract Class for the Primal-Dual algorithm"""
 
     @abstractmethod
     def set_parameters(self, theta, tau, sigma, eta):
-        """Paramters are placeholders to"""
+        """Paramters are placeholders to the parameters"""
+        pass
+
+class FISTAProxOperator(ProximalOperator):
+
+    @abstractmethod
+    def set_parameters(self, L, lam):
+        """Paramters are placeholders to the parameters"""
         pass
 
         
@@ -29,11 +37,11 @@ class FISTAProximal(ProximalOperator):
 
     Proximal operator for Fista on lasso'''
 
-    def __init__(self, gradient, L, lam):
+    def __init__(self, gradient):
         super().__init__()
         self.gradient = gradient
-        self.L = L
-        self.lam = lam
+        self.L = None
+        self.lam = None
 
     def base_call(self, z):
         return tf.sign(z)*tf.complex(tf.nn.relu(tf.abs(z) - self.lam/self.L), 0.0)
@@ -41,8 +49,12 @@ class FISTAProximal(ProximalOperator):
     def __call__(self, y):
         # TODO: Implement
         pass
-        b = y - self.gradient(y)/self.L
+        b = y - self.gradient(y)/tf.cast(self.L, tf.complex64)
         return self.base_call(b)
+
+    def set_parameters(self, L, lam):
+        self.L = L
+        self.lam = lam
 
 
 

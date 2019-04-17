@@ -51,7 +51,7 @@ class FISTA(Algorithm):
     g(x) = lambda * ||z||_1
     """
 
-    def __init__(self, gradient, L, lam):
+    def __init__(self, gradient):
         """
         Arguments:
             gradient: callable. Gradient of the function
@@ -59,9 +59,11 @@ class FISTA(Algorithm):
             lam: Lambda parameter in LASSO.
         """
         super().__init__()
-        self.L = L
-        self.lam = lam
-        self.proximal = FISTAProximal(gradient, L, lam)
+        self.L = tf.placeholder(tf.float32, shape=(), name='L')
+        self.lam = tf.placeholder(tf.float32, shape=(), name='lambda')
+        self.proximal = FISTAProximal(gradient)
+        self.proximal.set_parameters(self.L, self.lam)
+
         self.result = None
 
     def body(self, x_old, y_old, t_old):
@@ -84,7 +86,7 @@ class FISTA(Algorithm):
         return x, y, t
 
 
-    def run(self, n_iter=1000, initial_x=None):
+    def run(self, initial_x=None):
         """
         Runs FISTA
 
@@ -108,7 +110,9 @@ class FISTA(Algorithm):
         x, y, t = tf.while_loop(lambda *args: True,
                                 self.body,
                                 (initial_x, initial_x, 1.0),
-                                maximum_iterations=n_iter)
+                                maximum_iterations=tf.placeholder(tf.float32,
+                                                                  shape=(),
+                                                                  name='n_iter'))
 
         # TODO: Set result
         return x
