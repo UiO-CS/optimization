@@ -82,7 +82,7 @@ class MRIOperator(LinearOperator):
         """Calculate WF*P"""
         result = tf.where(self.samp_patt, x, tf.zeros_like(x))
         result = tf.transpose(result, [2,0,1]) # [channels, height, width]
-        result = tf.complex(tf.sqrt(tf.size(result, out_type=tf.float32)), 0.0) * tf.ifft2d(result)
+        result = tf.complex(tf.sqrt(tf.cast(tf.size(result), tf.float32)), 0.0) * tf.ifft2d(result)
         result = tf.transpose(result, [1,2,0]) # [height, width, channels]
         real_dwt = dwt2d(tf.real(result), self.wavelet, self.levels)
         imag_dwt = dwt2d(tf.imag(result), self.wavelet, self.levels)

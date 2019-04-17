@@ -50,21 +50,22 @@ class BPDNFStar(ProximalOperator):
     Equation can be found on p 485 of A mathematical introduction to
     compressive sensing"""
 
-    def __init__(self, sigma, eta, y):
-        self.sigma = sigma
-        self.eta = eta
-        self.y = y
+    def __init__(self, measurements):
+        # TODO: Type might be wrong
+        self.sigma = tf.placeholder(tf.float32, shape=(), name='sigma')
+        self.eta = tf.placeholder(tf.float32, shape=(), name='eta')
+        self.y = measurements
 
 
     def __call__(self, ksi):
-        norm_expression = ksi - self.sigma*self.y
-        norm_val = tf.norm(norm_expression)
+        norm_expression = ksi - tf.cast(self.sigma, tf.complex64)*self.y
+        norm_val = tf.cast(tf.norm(norm_expression), tf.float32)
         compare_val = self.eta*self.sigma
 
         result = tf.cond(
             tf.cast(norm_val, tf.float32) < compare_val,
             lambda: tf.zeros_like(ksi),
-            lambda: (1 - compare_val/norm_val) * norm_expression
+            lambda: tf.cast(1 - compare_val/norm_val, tf.complex64) * norm_expression
         )
 
         return result
