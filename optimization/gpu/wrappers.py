@@ -32,7 +32,7 @@ def build_pd_graph(N, wav, levels):
     return result_coeffs
 
 
-def run_pd(im, samp_patt, wav, levels, n_iter):
+def run_pd(im, samp_patt, wav, levels, n_iter, eta, sigma=0.5, tau=0.5, theta=1):
     """Perform experiment"""
     N = im.shape[0]
     result_coeffs = build_pd_graph(N, wav, levels)
@@ -43,11 +43,6 @@ def run_pd(im, samp_patt, wav, levels, n_iter):
 
     im = np.expand_dims(im, -1).astype(np.complex)
     samp_patt = np.expand_dims(samp_patt, -1).astype(np.bool)
-
-    sigma = 0.5
-    tau = 0.5
-    theta = 1
-    eta = 1
 
     start = time.time()
     with tf.Session() as sess:
@@ -80,7 +75,7 @@ def build_fista_graph(N, wav, levels):
     return result_coeffs
 
 
-def run_fista(im, samp_patt, wav, levels, n_iter):
+def run_fista(im, samp_patt, wav, levels, n_iter, lam, L=2):
     """Perform experiment"""
     N = im.shape[0]
     result_coeffs = build_fista_graph(N, wav, levels)
@@ -92,8 +87,6 @@ def run_fista(im, samp_patt, wav, levels, n_iter):
     im = np.expand_dims(im, -1).astype(np.complex)
     samp_patt = np.expand_dims(samp_patt, -1).astype(np.bool)
 
-    L = 2
-    lam = 0
 
     start = time.time()
     with tf.Session() as sess:
