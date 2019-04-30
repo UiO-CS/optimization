@@ -44,7 +44,6 @@ class FISTA(Algorithm):
         t_old = 1
 
         for i in range(1,n_iter+1):
-            print(i)
             x = self.proximal(y)
             t = (1 + sqrt(1 + 5*t_old**2))/2.0
             y = x + (t_old - 1)/t * (x - x_old)
@@ -73,7 +72,6 @@ class PrimalDual(Algorithm):
         ksi = np.zeros_like(x_old)
 
         for i in range(n_iter):
-            print(i)
             ksi = self.prox_f_star(ksi + self.sigma*self.op(x_line))
             x = self.prox_g(x_old - self.tau*self.op(ksi, adjoint=True))
             x_line = x + self.theta*(x - x_old)
