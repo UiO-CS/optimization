@@ -71,30 +71,38 @@ def build_fista_graph(N, wav, levels):
     alg = FISTA(gradient)
 
     result_coeffs = alg.run(op(measurements, True))
+    real_idwt = idwt2d(tf.real(result_coeffs), wav, levels)
+    imag_idwt = idwt2d(tf.imag(result_coeffs), wav, levels)
+    output_node = tf.complex(real_idwt, imag_idwt)
 
-    return result_coeffs
+
+    return output_node
 
 
 def run_fista(im, samp_patt, wav, levels, n_iter, lam, L=2):
     """Perform experiment"""
     N = im.shape[0]
-    result_coeffs = build_fista_graph(N, wav, levels)
-
-    real_idwt = idwt2d(tf.real(result_coeffs), wav, levels)
-    imag_idwt = idwt2d(tf.imag(result_coeffs), wav, levels)
-    node = tf.complex(real_idwt, imag_idwt)
+    tf_result = build_fista_graph(N, wav, levels)
 
     im = np.expand_dims(im, -1).astype(np.complex)
     samp_patt = np.expand_dims(samp_patt, -1).astype(np.bool)
 
-
     start = time.time()
     with tf.Session() as sess:
-        result = sess.run(node, feed_dict={'image:0': im,
-                                           'sampling_pattern:0': samp_patt,
-                                           'L:0': L,
-                                           'lambda:0': lam,
-                                           'n_iter:0': n_iter})
+        result = sess.run(tf_node, feed_dict={'image:0': im,
+                                              'sampling_pattern:0': samp_patt,
+                                              'L:0': L,
+                                              'lambda:0': lam,
+                                              'n_iter:0': n_iter})
     end = time.time()
     print(end-start)
     return np.abs(np.squeeze(result))
+
+def run_session(result_node, sess, **kwargs):
+    start = time.time()
+    result = sess.run(result_node, 
+                      feed_dict={k + ':0': v for k, v in kwargs.items()})
+
+    running_time = time.time() - start
+
+    return np.abs(np.squeeze(result)), running_time
