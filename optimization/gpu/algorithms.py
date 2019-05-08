@@ -165,3 +165,53 @@ class PrimalDual(Algorithm):
                                        maximum_iterations=tf.placeholder(tf.int32, shape=(), name='n_iter'))
 
         return x
+
+
+class SquareRootLASSO(Algorithm):
+
+    def __init__(self, op, prox1, prox2, measurements):
+        self.op = op
+        self.prox1 = prox1
+        self.prox2 = prox2
+
+        self.measurements = measurements
+
+        # self.theta = tf.placeholder(tf.float32, shape=(), name='theta')
+        self.tau = tf.placeholder(tf.float32, shape=(), name='tau')
+        self.sigma = tf.placeholder(tf.float32, shape=(), name='sigma')
+        self.lam = tf.placeholder(tf.float32, shape=(), name='lambda')
+        # self.eta = tf.placeholder(tf.float32, shape=(), name='eta')
+
+        # complex versions (sometimes needed)
+        self.comptau = tf.cast(self.tau, tf.complex64)
+        self.compsigma = tf.cast(self.sigma, tf.complex64)
+        self.complam = tf.cast(self.lam, tf.complex64)
+
+        # No parameters need to be set for our setup
+        self.prox1.set_parameters(self.tau, self.lam)
+
+
+    def body(self, x_old, y_old):
+
+
+        x_new = self.prox1(x_old - self.comptau * self.op(y_old, adjoint=True))
+        y_new = self.prox2(y_old + self.compsigma * self.op(2*x_new + x_old) - self.compsigma*self.measurements)
+
+        return x_new, y_new
+
+    def run(self, initial_x=None, initial_y=None):
+        """Similar as FISTA.body"""
+        
+        # TODO What is the dual and what is the primal solution?
+
+        # Initial values
+        x = initial_x
+        y = tf.zeros_like(x)
+
+        x, y = tf.while_loop(lambda *args: True,
+                                       self.body,
+                                       (x, y),
+                                       maximum_iterations=tf.placeholder(tf.int32, shape=(), name='n_iter'))
+
+
+        return x

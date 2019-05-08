@@ -110,3 +110,41 @@ class BPDNG(PDProxOperator):
 
     def set_parameters(self, theta, tau, sigma, eta):
         self.tau = tau
+
+
+
+#  ____   ___  _   _   _    ____  _____ ____   ___   ___ _____ 
+# / ___| / _ \| | | | / \  |  _ \| ____|  _ \ / _ \ / _ \_   _|
+# \___ \| | | | | | |/ _ \ | |_) |  _| | |_) | | | | | | || |  
+#  ___) | |_| | |_| / ___ \|  _ <| |___|  _ <| |_| | |_| || |  
+# |____/ \__\_\\___/_/   \_\_| \_\_____|_| \_\\___/ \___/ |_|  
+#                                                              
+#  _        _    ____ ____   ___  
+# | |      / \  / ___/ ___| / _ \ 
+# | |     / _ \ \___ \___ \| | | |
+# | |___ / ___ \ ___) |__) | |_| |
+# |_____/_/   \_\____/____/ \___/ 
+#                                 
+
+# Very ad.hoc. naming and solution
+class SQLassoProx1(ProximalOperator):
+
+    def __init__(self):
+        self.tau = None
+        self.lam = None
+
+
+    def __call__(self, z):
+        return tf.sign(z)*tf.complex(tf.nn.reul(tf.abs(x) - self.tau*self.lam), 0.0)
+
+
+    def set_parameters(self, tau, lam):
+        self.tau = tau
+        self.lam = lam
+
+
+class SQLassoProx2(ProximalOperator):
+
+    def __call__(self, z):
+        return z * tf.minimum(1, 1.0/tf.norm(z))
+
