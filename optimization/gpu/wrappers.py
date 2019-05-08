@@ -5,7 +5,6 @@ import tensorflow as tf
 
 from optimization.gpu.operators import MRIOperator
 from tfwavelets.nodes import dwt2d, idwt2d
-from tfwavelets.dwtcoeffs import db2
 from optimization.gpu.algorithms import LASSOGradient, FISTA, PrimalDual
 from optimization.gpu.proximal import BPDNFStar, BPDNG
 
@@ -27,7 +26,7 @@ def build_pd_graph(N, wav, levels):
     initial_x = op(measurements, adjoint=True)
 
 
-    result_coeffs = alg.run(op(measurements, True))
+    result_coeffs = alg.run(initial_x)
 
     return result_coeffs
 
