@@ -26,6 +26,7 @@ class LASSOGradient:
 
     def __call__(self, y):
         """Evaluation of the gradient"""
+        # return self.op(self.op(y) - self.measurements, adjoint=True)
         return tf.complex(2.0, 0.0)*self.op(self.op(y) - self.measurements, adjoint=True)
 
 
@@ -202,16 +203,18 @@ class SquareRootLASSO(Algorithm):
     def run(self, initial_x=None, initial_y=None):
         """Similar as FISTA.body"""
         
-        # TODO What is the dual and what is the primal solution?
 
         # Initial values
         x = initial_x
         y = tf.zeros_like(x)
 
-        x, y = tf.while_loop(lambda *args: True,
-                                       self.body,
-                                       (x, y),
-                                       maximum_iterations=tf.placeholder(tf.int32, shape=(), name='n_iter'))
+        if initial_y:
+            y = initial_y
+
+        x_result, y_result = tf.while_loop(lambda *args: True,
+                                           self.body,
+                                           (x, y),
+                                           maximum_iterations=tf.placeholder(tf.int32, shape=(), name='n_iter'))
 
 
-        return x
+        return x_result

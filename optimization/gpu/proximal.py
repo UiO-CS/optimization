@@ -33,9 +33,7 @@ class FISTAProxOperator(ProximalOperator):
 #| |___ / ___ \ ___) |__) | |_| |
 #|_____/_/   \_\____/____/ \___/
 class FISTAProximal(ProximalOperator):
-    '''Assumes gradient is 2*op(op(z) - y, adjoint=True)
-
-    Proximal operator for Fista on lasso'''
+    '''Proximal operator for Fista on lasso'''
 
     def __init__(self, gradient):
         super().__init__()
@@ -47,7 +45,6 @@ class FISTAProximal(ProximalOperator):
         return tf.sign(z)*tf.complex(tf.nn.relu(tf.abs(z) - self.lam/self.L), 0.0)
 
     def __call__(self, y):
-        # TODO: Implement
         pass
         b = y - self.gradient(y)/tf.cast(self.L, tf.complex64)
         return self.base_call(b)
@@ -135,7 +132,7 @@ class SQLassoProx1(ProximalOperator):
 
 
     def __call__(self, z):
-        return tf.sign(z)*tf.complex(tf.nn.reul(tf.abs(x) - self.tau*self.lam), 0.0)
+        return tf.sign(z)*tf.complex(tf.nn.relu(tf.abs(z) - self.tau*self.lam), 0.0)
 
 
     def set_parameters(self, tau, lam):
@@ -146,5 +143,5 @@ class SQLassoProx1(ProximalOperator):
 class SQLassoProx2(ProximalOperator):
 
     def __call__(self, z):
-        return z * tf.minimum(1, 1.0/tf.norm(z))
+        return z * tf.cast(tf.minimum(1.0, tf.abs(1.0/tf.norm(z))), tf.complex64)
 
