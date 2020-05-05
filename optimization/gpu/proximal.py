@@ -123,7 +123,7 @@ class BPDNG(PDProxOperator):
 # |_____/_/   \_\____/____/ \___/ 
 #                                 
 
-# Very ad.hoc. naming and solution
+# TODO Very rushed naming and computations
 class SQLassoProx1(ProximalOperator):
 
     def __init__(self):
@@ -145,3 +145,28 @@ class SQLassoProx2(ProximalOperator):
     def __call__(self, z):
         return z * tf.cast(tf.minimum(1.0, tf.abs(1.0/tf.norm(z))), tf.complex64)
 
+
+class WeightedL1Prox(ProximalOperator):
+    '''
+    Prox function for the weighted l1-norm
+    f(x)_i = sum_i w_i |x_i|
+
+    Computed from the prox function of the l1-norm, assuming that the weights w_i are *strictly* positive.
+    TODO: This might cause issues if a wavelet level is 0-sparse.
+    TODO: Should we remove the tau?
+    '''
+
+    def __init__(self):
+        self.tau = None
+        self.lam = None
+        self.weights = None
+
+
+    def __call__(self, z):
+        return tf.sign(z)*tf.complex(tf.nn.relu(tf.abs(z) - self.weights*self.tau*self.lam), 0.0)
+
+
+    def set_parameters(self, tau, lam, weights):
+        self.tau = tau
+        self.lam = lam
+        self.weights = weights
