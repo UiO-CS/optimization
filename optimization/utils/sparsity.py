@@ -1,7 +1,6 @@
 import pywt
 
 import numpy as np
-import matplotlib.pyplot as plt
 import pywt.data
 
 def estimate_sparsity(im, wavelet, nres=None, eps=1e-1):
