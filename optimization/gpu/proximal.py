@@ -156,17 +156,17 @@ class WeightedL1Prox(ProximalOperator):
     TODO: Should we remove the tau?
     '''
 
-    def __init__(self):
+    def __init__(self, weights):
+        self.weights = weights
+
         self.tau = None
         self.lam = None
-        self.weights = None
 
 
     def __call__(self, z):
         return tf.sign(z)*tf.complex(tf.nn.relu(tf.abs(z) - self.weights*self.tau*self.lam), 0.0)
 
 
-    def set_parameters(self, tau, lam, weights):
+    def set_parameters(self, tau, lam):
         self.tau = tau
         self.lam = lam
-        self.weights = weights

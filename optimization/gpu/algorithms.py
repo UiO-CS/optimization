@@ -214,7 +214,8 @@ class SquareRootLASSO(Algorithm):
         x_result, y_result = tf.while_loop(lambda *args: True,
                                            self.body,
                                            (x, y),
-                                           maximum_iterations=tf.placeholder(tf.int32, shape=(), name='n_iter'))
+                                           maximum_iterations=tf.placeholder(tf.int32, shape=(), name='n_iter'),
+                                           )
 
 
         return x_result
