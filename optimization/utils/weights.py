@@ -12,8 +12,11 @@ def generate_weight_matrix(N, weights, dtype):
 
     result = np.zeros((N,N), dtype=dtype)
 
-    for w in reversed(weights):
-        result[:N,:N] = w
+    s = np.sum(weights)
+    for sj in reversed(weights):
+        result[:N,:N] = s/np.sqrt(sj)
         N = N >> 1
+
+
 
     return result
