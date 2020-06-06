@@ -149,24 +149,16 @@ class SQLassoProx2(ProximalOperator):
 class WeightedL1Prox(ProximalOperator):
     '''
     Prox function for the weighted l1-norm
-    f(x)_i = sum_i w_i |x_i|
+    f(x)_i = lambda * sum_i w_i |x_i|
 
     Computed from the prox function of the l1-norm, assuming that the weights w_i are *strictly* positive.
-    TODO: This might cause issues if a wavelet level is 0-sparse.
-    TODO: Should we remove the tau?
     '''
 
-    def __init__(self, weights):
+    def __init__(self, weights, lam):
         self.weights = weights
-
-        self.tau = None
-        self.lam = None
+        self.lam = lam
 
 
     def __call__(self, z):
-        return tf.sign(z)*tf.complex(tf.nn.relu(tf.abs(z) - self.weights*self.tau*self.lam), 0.0)
+        return tf.sign(z)*tf.complex(tf.nn.relu(tf.abs(z) - self.weights*self.lam), 0.0)
 
-
-    def set_parameters(self, tau, lam):
-        self.tau = tau
-        self.lam = lam

@@ -170,33 +170,23 @@ class PrimalDual(Algorithm):
 
 class SquareRootLASSO(Algorithm):
 
-    def __init__(self, op, prox1, prox2, measurements):
+    def __init__(self, op, prox1, prox2, measurements, tau, sigma, lam):
         self.op = op
         self.prox1 = prox1
         self.prox2 = prox2
 
         self.measurements = measurements
 
-        # self.theta = tf.placeholder(tf.float32, shape=(), name='theta')
-        self.tau = tf.placeholder(tf.float32, shape=(), name='tau')
-        self.sigma = tf.placeholder(tf.float32, shape=(), name='sigma')
-        self.lam = tf.placeholder(tf.float32, shape=(), name='lambda')
-        # self.eta = tf.placeholder(tf.float32, shape=(), name='eta')
-
-        # complex versions (sometimes needed)
-        self.comptau = tf.cast(self.tau, tf.complex64)
-        self.compsigma = tf.cast(self.sigma, tf.complex64)
-        self.complam = tf.cast(self.lam, tf.complex64)
-
-        # No parameters need to be set for our setup
-        self.prox1.set_parameters(self.tau, self.lam)
+        # Casting is necessary for types to match in the body
+        self.tau = tf.cast(tau, tf.complex64)
+        self.sigma = tf.cast(sigma, tf.complex64)
 
 
     def body(self, x_old, y_old):
 
 
-        x_new = self.prox1(x_old - self.comptau * self.op(y_old, adjoint=True))
-        y_new = self.prox2(y_old + self.compsigma * self.op(2*x_new + x_old) - self.compsigma*self.measurements)
+        x_new = self.prox1(x_old - self.tau * self.op(y_old, adjoint=True))
+        y_new = self.prox2(y_old + self.sigma * self.op(2*x_new + x_old) - self.sigma*self.measurements)
 
         return x_new, y_new
 
