@@ -186,7 +186,7 @@ class SquareRootLASSO(Algorithm):
 
 
         x_new = self.prox1(x_old - self.tau * self.op(y_old, adjoint=True))
-        y_new = self.prox2(y_old + self.sigma * self.op(2*x_new + x_old) - self.sigma*self.measurements)
+        y_new = self.prox2(y_old + self.sigma * self.op(2*x_new - x_old) - self.sigma*self.measurements)
 
         return x_new, y_new
 
