@@ -60,8 +60,8 @@ class FISTA(Algorithm):
             lam: Lambda parameter in LASSO.
         """
         super().__init__()
-        self.L = tf.placeholder(tf.float32, shape=(), name='L')
-        self.lam = tf.placeholder(tf.float32, shape=(), name='lambda')
+        self.L = tf.compat.v1.placeholder(tf.float32, shape=(), name='L')
+        self.lam = tf.compat.v1.placeholder(tf.float32, shape=(), name='lambda')
         self.proximal = FISTAProximal(gradient)
         self.proximal.set_parameters(self.L, self.lam)
 
@@ -111,7 +111,7 @@ class FISTA(Algorithm):
         x, y, t = tf.while_loop(lambda *args: True,
                                 self.body,
                                 (initial_x, initial_x, 1.0),
-                                maximum_iterations=tf.placeholder(tf.float32,
+                                maximum_iterations=tf.compat.v1.placeholder(tf.float32,
                                                                   shape=(),
                                                                   name='n_iter'))
 
@@ -136,10 +136,10 @@ class PrimalDual(Algorithm):
         self.prox_f_star = prox_f_star
         self.prox_g = prox_g
 
-        self.theta = tf.placeholder(tf.float32, shape=(), name='theta')
-        self.tau = tf.placeholder(tf.float32, shape=(), name='tau')
-        self.sigma = tf.placeholder(tf.float32, shape=(), name='sigma')
-        self.eta = tf.placeholder(tf.float32, shape=(), name='eta')
+        self.theta = tf.compat.v1.placeholder(tf.float32, shape=(), name='theta')
+        self.tau = tf.compat.v1.placeholder(tf.float32, shape=(), name='tau')
+        self.sigma = tf.compat.v1.placeholder(tf.float32, shape=(), name='sigma')
+        self.eta = tf.compat.v1.placeholder(tf.float32, shape=(), name='eta')
 
         self.prox_f_star.set_parameters(self.theta, self.tau, self.sigma, self.eta)
         self.prox_g.set_parameters(self.theta, self.tau, self.sigma, self.eta)
@@ -163,7 +163,7 @@ class PrimalDual(Algorithm):
         x, x_line, ksi = tf.while_loop(lambda *args: True,
                                        self.body,
                                        (x, x_line, ksi),
-                                       maximum_iterations=tf.placeholder(tf.int32, shape=(), name='n_iter'))
+                                       maximum_iterations=tf.compat.v1.placeholder(tf.int32, shape=(), name='n_iter'))
 
         return x
 
@@ -204,7 +204,7 @@ class SquareRootLASSO(Algorithm):
         x_result, y_result = tf.while_loop(lambda *args: True,
                                            self.body,
                                            (x, y),
-                                           maximum_iterations=tf.placeholder(tf.int32, shape=(), name='n_iter'),
+                                           maximum_iterations=tf.compat.v1.placeholder(tf.int32, shape=(), name='n_iter'),
                                            )
 
 

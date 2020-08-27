@@ -12,8 +12,8 @@ def build_pd_graph(N, wav, levels):
     '''Returns the output node of the Primal-dual algorithm'''
 
     # Shapes must be set for the wavelet transform to be applicable
-    tf_im = tf.placeholder(tf.complex64, shape=[N,N,1], name='image')
-    tf_samp_patt = tf.placeholder(tf.bool, shape=[N,N,1], name='sampling_pattern')
+    tf_im = tf.compat.v1.placeholder(tf.complex64, shape=[N,N,1], name='image')
+    tf_samp_patt = tf.compat.v1.placeholder(tf.bool, shape=[N,N,1], name='sampling_pattern')
 
     op = MRIOperator(tf_samp_patt, wav, levels)
     measurements = op.sample(tf_im)
@@ -34,8 +34,8 @@ def build_full_pd_graph(N, wav, levels):
 
     result_coeffs = build_pd_graph(N, wav, levels)
 
-    real_idwt = idwt2d(tf.real(result_coeffs), wav, levels)
-    imag_idwt = idwt2d(tf.imag(result_coeffs), wav, levels)
+    real_idwt = idwt2d(tf.math.real(result_coeffs), wav, levels)
+    imag_idwt = idwt2d(tf.math.imag(result_coeffs), wav, levels)
     node = tf.complex(real_idwt, imag_idwt)
 
     return node
@@ -46,7 +46,7 @@ def run_pd(im, samp_patt, wav, levels, n_iter, eta, sigma=0.5, tau=0.5, theta=1)
     N = im.shape[0]
     result_coeffs = build_pd_graph(N, wav, levels)
 
-    real_idwt = idwt2d(tf.real(result_coeffs), wav, levels)
+    real_idwt = idwt2d(tf.math.real(result_coeffs), wav, levels)
     imag_idwt = idwt2d(tf.imag(result_coeffs), wav, levels)
     node = tf.complex(real_idwt, imag_idwt)
 
@@ -68,8 +68,8 @@ def run_pd(im, samp_patt, wav, levels, n_iter, eta, sigma=0.5, tau=0.5, theta=1)
 
 
 def build_fista_graph(N, wav, levels):
-    tf_im = tf.placeholder(tf.complex64, shape=[N,N,1], name='image')
-    tf_samp_patt = tf.placeholder(tf.bool, shape=[N,N,1], name='sampling_pattern')
+    tf_im = tf.compat.v1.placeholder(tf.complex64, shape=[N,N,1], name='image')
+    tf_samp_patt = tf.compat.v1.placeholder(tf.bool, shape=[N,N,1], name='sampling_pattern')
 
     op = MRIOperator(tf_samp_patt, wav, levels)
     measurements = op.sample(tf_im)
@@ -80,8 +80,8 @@ def build_fista_graph(N, wav, levels):
     alg = FISTA(gradient)
 
     result_coeffs = alg.run(op(measurements, True))
-    real_idwt = idwt2d(tf.real(result_coeffs), wav, levels)
-    imag_idwt = idwt2d(tf.imag(result_coeffs), wav, levels)
+    real_idwt = idwt2d(tf.math.real(result_coeffs), wav, levels)
+    imag_idwt = idwt2d(tf.math.imag(result_coeffs), wav, levels)
     output_node = tf.complex(real_idwt, imag_idwt)
 
 
