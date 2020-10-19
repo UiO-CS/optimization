@@ -69,22 +69,26 @@ class BPDNFStar(PDProxOperator):
     Equation can be found on p 485 of A mathematical introduction to
     compressive sensing"""
 
-    def __init__(self, measurements):
+    def __init__(self, measurements, sigma, eta, dtype=tf.float32):
         # TODO: Type might be wrong
-        self.sigma = None
-        self.eta = None
+        self.sigma = sigma
+        self.eta = eta
         self.y = measurements
-
+        self.dtype = dtype;
+        if dtype == tf.float32:
+            self.cdtype = tf.complex64
+        elif dtype == tf.float64:
+            self.cdtype = tf.complex128
 
     def __call__(self, ksi):
-        norm_expression = ksi - tf.cast(self.sigma, tf.complex64)*self.y
-        norm_val = tf.cast(tf.norm(norm_expression), tf.float32)
+        norm_expression = ksi - tf.cast(self.sigma, self.cdtype)*self.y
+        norm_val = tf.cast(tf.norm(norm_expression), self.dtype)
         compare_val = self.eta*self.sigma
 
         result = tf.cond(
-            tf.cast(norm_val, tf.float32) < compare_val,
+            tf.cast(norm_val, self.dtype) < compare_val,
             lambda: tf.zeros_like(ksi),
-            lambda: tf.cast(1 - compare_val/norm_val, tf.complex64) * norm_expression
+            lambda: tf.cast(tf.constant(1.0, dtype=self.dtype) - compare_val/norm_val, self.cdtype) * norm_expression
         )
 
         return result
@@ -99,11 +103,12 @@ class BPDNG(PDProxOperator):
 
     Equation (15.23) in A mathematical introduction to compressive sensing"""
 
-    def __init__(self):
-        self.tau = None
-
+    def __init__(self, tau, dtype=tf.float32):
+        self.tau = tau
+        self.dtype = dtype;
+        
     def __call__(self, z):
-        return tf.sign(z)*tf.complex(tf.nn.relu(tf.abs(z) - self.tau), 0.0)
+        return tf.sign(z)*tf.complex(tf.nn.relu(tf.abs(z) - self.tau), tf.constant(0.0, dtype=self.dtype))
 
     def set_parameters(self, theta, tau, sigma, eta):
         self.tau = tau
@@ -126,13 +131,13 @@ class BPDNG(PDProxOperator):
 # TODO Very rushed naming and computations
 class SQLassoProx1(ProximalOperator):
 
-    def __init__(self):
+    def __init__(self, dtype=tf.float32):
         self.tau = None
         self.lam = None
-
+        self.dtype = dtype
 
     def __call__(self, z):
-        return tf.sign(z)*tf.complex(tf.nn.relu(tf.abs(z) - self.tau*self.lam), 0.0)
+        return tf.sign(z)*tf.complex(tf.nn.relu(tf.abs(z) - self.tau*self.lam), tf.constant(0.0, dtype=self.dtype))
 
 
     def set_parameters(self, tau, lam):
@@ -142,23 +147,37 @@ class SQLassoProx1(ProximalOperator):
 
 class SQLassoProx2(ProximalOperator):
 
+
+    def __init__(self, dtype=tf.float32):
+        self.dtype = dtype
+        if dtype == tf.float32:
+            self.cdtype = tf.complex64
+        elif dtype == tf.float64:
+            self.cdtype = tf.complex128
+
+
     def __call__(self, z):
-        return z * tf.cast(tf.minimum(1.0, tf.abs(1.0/tf.norm(z))), tf.complex64)
+        return z * tf.cast(tf.minimum(tf.constant(1.0, dtype=self.dtype), tf.abs(1.0/tf.norm(z))), self.cdtype);
 
 
 class WeightedL1Prox(ProximalOperator):
     '''
     Prox function for the weighted l1-norm
-    f(x)_i = lambda * sum_i w_i |x_i|
+    f(x)_i = s * sum_i w_i |x_i|
+    
+    `s` is a positive real number.
 
     Computed from the prox function of the l1-norm, assuming that the weights w_i are *strictly* positive.
     '''
 
-    def __init__(self, weights, lam):
+    def __init__(self, weights, s, dtype=tf.float32):
         self.weights = weights
-        self.lam = lam
+        self.s = s
+        self.dtype = dtype
 
 
     def __call__(self, z):
-        return tf.sign(z)*tf.complex(tf.nn.relu(tf.abs(z) - self.weights*self.lam), 0.0)
+        return tf.sign(z)*tf.complex(tf.nn.relu(tf.abs(z) - self.weights*self.s), tf.constant(0.0, dtype=self.dtype))
+
+
 
