@@ -44,6 +44,7 @@ class SquareRootLASSO(Algorithm):
         self.sigma = tf.cast(sigma, self.cdtype)
 
     def body(self, x_old, y_old):
+        """ Main iteration for tf.while_loop """
 
         x_new = self.prox1(x_old - self.tau * self.op(y_old, adjoint=True))
         y_new = self.prox2(y_old + self.sigma * self.op(2*x_new - x_old) - self.sigma*self.measurements)
@@ -51,9 +52,7 @@ class SquareRootLASSO(Algorithm):
         return x_new, y_new
 
     def run(self, initial_x=None, initial_y=None):
-        """Similar as FISTA.body"""
-        
-
+        """ Start algorithm """
         # Initial values
         x = initial_x
         y = tf.zeros_like(x)
