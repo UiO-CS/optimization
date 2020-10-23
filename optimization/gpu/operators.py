@@ -38,7 +38,7 @@ class MRIOperator(LinearOperator):
     F: Discrete Fourier transform
     W*: Inverse discrete wavelet transform"""
 
-    def __init__(self, samp_patt, wavelet, levels, shift_samp_patt=True):
+    def __init__(self, samp_patt, wavelet, levels, dtype=tf.float32, shift_samp_patt=True):
         """
         Arguments:
             samp_patt: Tensor of dtype bool. As Tensorflow does not
@@ -55,6 +55,7 @@ class MRIOperator(LinearOperator):
 
         self.wavelet = wavelet
         self.levels = levels
+        self.dtype = dtype
         self.samp_patt = samp_patt
 
 
@@ -65,41 +66,40 @@ class MRIOperator(LinearOperator):
         """
         real_idwt = idwt2d(tf.math.real(x), self.wavelet, self.levels)
         imag_idwt = idwt2d(tf.math.imag(x), self.wavelet, self.levels)
-        result = tf.complex(real_idwt, imag_idwt)
+        result = tf.dtypes.complex(real_idwt, imag_idwt)
 
-        # TODO: is this right?
         result = tf.transpose(result, [2,0,1])
 
-        # TODO Is this right? Scaling to make FFT unitary
-        result = tf.complex(1.0/tf.sqrt(tf.cast(tf.size(result), tf.float32)), 0.0) * tf.signal.fft2d(result)
+        result = tf.dtypes.complex(1.0/tf.sqrt(tf.cast(tf.size(result), self.dtype)), tf.constant(0.0, dtype=self.dtype)) * tf.signal.fft2d(result)
         result = tf.transpose(result, [1,2,0])
 
         # Subsampling
-        result = tf.where(self.samp_patt, result, tf.zeros_like(result))
+        result = tf.compat.v1.where_v2(self.samp_patt, result, tf.zeros_like(result))
         return result
 
     def adjoint(self, x):
         """Calculate WF*P"""
-        result = tf.where(self.samp_patt, x, tf.zeros_like(x))
+        result = tf.compat.v1.where_v2(self.samp_patt, x, tf.zeros_like(x))
         result = tf.transpose(result, [2,0,1]) # [channels, height, width]
-        result = tf.complex(tf.sqrt(tf.cast(tf.size(result), tf.float32)), 0.0) * tf.signal.ifft2d(result)
+        result = tf.dtypes.complex(tf.sqrt(tf.cast(tf.size(result), self.dtype)), tf.constant(0.0, dtype=self.dtype)) * tf.signal.ifft2d(result)
         result = tf.transpose(result, [1,2,0]) # [height, width, channels]
         real_dwt = dwt2d(tf.math.real(result), self.wavelet, self.levels)
         imag_dwt = dwt2d(tf.math.imag(result), self.wavelet, self.levels)
-        result = tf.complex(real_dwt, imag_dwt)
+        result = tf.dtypes.complex(real_dwt, imag_dwt)
         return result
 
     def sample(self, x, adjoint=False):
         """Calculate PFx"""
         if not adjoint:
-            result = tf.transpose(x, [2,0,1])
-            #TODO: Is this right?
-            result = tf.complex(1.0/tf.sqrt(tf.cast(tf.size(result), tf.float32)), 0.0) * tf.signal.fft2d(result)
-            result = tf.transpose(result, [1,2,0])
-            result = tf.where(self.samp_patt, result, tf.zeros_like(result))
+            result = tf.compat.v1.transpose(x, perm=[2,0,1], conjugate=False)
+            result = tf.dtypes.complex(1.0/tf.sqrt(tf.cast(tf.size(result), self.dtype)), tf.constant(0.0, dtype=self.dtype)) * tf.signal.fft2d(result)
+            #result = tf.signal.fft2d(result)
+            result = tf.compat.v1.transpose(result, perm=[1,2,0], conjugate=False)
+            result = tf.compat.v1.where_v2(self.samp_patt, result, tf.zeros_like(result))
         else:
-            result = tf.where(self.samp_patt, x, tf.zeros_like(x))
-            result = tf.transpose(result, [2,0,1]) # [channels, height, width]
-            result = tf.complex(tf.sqrt(tf.cast(tf.size(result), tf.float32)), 0.0) * tf.signal.ifft2d(result)
-            result = tf.transpose(result, [1,2,0]) # [height, width, channels]
+            result = tf.compat.v1.where_v2(self.samp_patt, x, tf.zeros_like(x))
+            result = tf.compat.v1.transpose(result, perm=[2,0,1], conjugate=False) # [channels, height, width]
+            result = tf.dtypes.complex(tf.sqrt(tf.cast(tf.size(result), self.dtype)), tf.constant(0.0, dtype=self.dtype)) * tf.signal.ifft2d(result)
+            #result = tf.signal.ifft2d(result)
+            result = tf.compat.v1.transpose(result, perm=[1,2,0], conjugate=False) # [height, width, channels]
         return result
