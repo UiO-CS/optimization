@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from .proximal import FISTAProximal, SQLassoProx2, WeightedL1Prox
+from .proximal import SQLassoProx2, WeightedL1Prox
 
 import tensorflow as tf
 
